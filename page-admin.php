@@ -61,14 +61,23 @@ class MavidaAdminPage {
 		add_action( 'admin_init', array( $this , "register_settings")  );
 		
 		} 
-		
-	function setTitle( $title){
 	
+	/*
+	 * setter for title
+	 */
+	public function setTitle( $title){
 		$this->page_title = $title;
 		$this->menu_title = $title;		
-	
 	}
 
+	/*
+	 * setter for menu
+	 */
+	public function setMenu( $menu ){
+		$this->parent_slug = $menu;
+	}
+	
+	
 	/*
 	 * creo la voce di menu usando add_submenu_page
 	 *
