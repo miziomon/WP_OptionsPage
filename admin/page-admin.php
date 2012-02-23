@@ -1,7 +1,8 @@
 <?php
 /*
  * 22.02.2012 | maurizio
- * template per la gestione della pagina di amministrazione
+ * blank template per create options page inside wordpress backend
+ * 
  *
  * http://codex.wordpress.org/Creating_Options_Pages
  * http://ottodestruct.com/blog/2009/wordpress-settings-api-tutorial/
@@ -19,9 +20,15 @@ class MavidaAdminPage {
 	private	$menu_slug;
 	private	$function;
 	
-	private	$viewpath;
-	private $settings_fields;
 	
+	private	$viewpath;
+	
+	private $setting_name;
+	private $setting_region = array();
+	private $setting_field = array();	
+	
+	private $setting_callback = "";
+
 	
 	function  __construct() { 
 		
@@ -45,10 +52,10 @@ class MavidaAdminPage {
 		 */ 
 
 		$this->parent_slug		= "themes.php";  // apparenza
-		$this->page_title		= "Pagina di amministrazione";
-		$this->menu_title	    = "Pagina di amministrazione";
+		$this->page_title		= "Custom Admin Page";
+		$this->menu_title	    = "Custom Admin Page";
 		$this->capability		= "administrator";
-		$this->menu_slug		= "pagina-di-amministrazione";
+		$this->menu_slug		= $this->slugerize( $this->page_title );
 		$this->function_name	= array( $this , "show_custumm_page");	
 	
 
@@ -56,28 +63,72 @@ class MavidaAdminPage {
 		
 		
 		// nome con cui vengono salvati i campi dentro le options
-		$this->settings_fields = "odm_setting";
+		$this->setting_name = "odm_setting";
+		
+		// esempio configurazione campi
+		$this->addSettingRegion( "Main Setting" , $this->lorem_ipsum() );
+		
+		$this->addSettingField(	"Main Setting", "text field" );
+		$this->addSettingField(	"Main Setting", "another text field" );		
+
+
+		
+		
 		
 		add_action( 'admin_init', array( $this , "register_settings")  );
 		
 		} 
-	
+		
+		
 	/*
 	 * setter for title
 	 */
 	public function setTitle( $title){
 		$this->page_title = $title;
-		$this->menu_title = $title;		
-	}
+		$this->menu_title = $title;	
+		$this->menu_slug = $this->slugerize( $title );
+		}
 
 	/*
 	 * setter for menu
 	 */
 	public function setMenu( $menu ){
 		$this->parent_slug = $menu;
-	}
+		}		
+
+	/*
+	 * setter for Option Name
+	 */
+	public function setOptionName( $name ){
+		$this->setting_name = $name; 
+		}		
+		
+
+	/*
+	 * setter for Settiong Region
+	 */
+	public function addSettingRegion( $region , $description ){
+
+		$this->setting_region[] = array(	"name" 			=> $region,
+											"slug" 			=> $this->slugerize( $this->setting_name . "-" . $region),
+											"description" 	=> $description 
+											); 
+		}		
+
+	/*
+	 * setter for Option Field
+	 */
+	public function addSettingField( $region , $name, $input_type = "text" ){
+
+
+		$this->setting_field[] = array(	"name" 			=> $name,
+											"slug" 		=> $this->slugerize( $name ),
+											"region" 	=> $this->slugerize( $this->setting_name . "-" . $region),
+											"type" 		 => $input_type,
+											); 
+		}	
 	
-	
+
 	/*
 	 * creo la voce di menu usando add_submenu_page
 	 *
@@ -115,23 +166,37 @@ class MavidaAdminPage {
 	 * gestione salvataggio optioni 
 	 */
 	function register_settings() {	
-		//register_setting( $this->settings_fields, 'version' );
-		
-		//register_setting( $this->settings_fields , $this->settings_fields , array( $this ,'plugin_options_validate' ));
-		
-		// la validazione è opzionale
-		register_setting( $this->settings_fields , $this->settings_fields  );		
-
-		//  imposto la prima sezione
-		add_settings_section( $this->settings_fields . '_main', 'Main Settings', array( $this ,'lorem_impsum'), $this->settings_fields );
-
-		//  imposto la seconda sezione
-		add_settings_section( $this->settings_fields . '_footer', 'Footer Settings', array( $this ,'lorem_impsum'), $this->settings_fields );		
-
-		// associo i campi da salvare
-		add_settings_field('version', 'Versione', array( $this , 'display_field' ) , $this->settings_fields , $this->settings_fields . '_main' , array("version") );		
-		add_settings_field('licenza', 'Licenza', array( $this , 'display_field' ) , $this->settings_fields , $this->settings_fields . '_main' , array("licenza") );				
 	
+		// validation is optional
+		// http://codex.wordpress.org/Function_Reference/register_setting
+
+		register_setting( $this->setting_name , $this->setting_name  );		
+
+		/*
+
+		//  set section
+		add_settings_section( '_main', 'Main Settings', array( $this ,'the_lorem_ipsum'), $this->setting_name );
+
+		// set fields
+		add_settings_field('version', 'Versione', array( $this , 'display_field' ) , $this->setting_name , '_main' , array("version") );		
+		add_settings_field('licenza', 'Licenza', array( $this , 'display_field' ) , $this->setting_name ,  '_main' , array("licenza") );				
+
+		*/
+
+		foreach ( $this->setting_region as $region ) {
+				$fuction = create_function('', "echo '<p>" . $region['description'] . "</p>'; return null;");
+				add_settings_section( $region["slug"] , $region["name"] ,  $fuction  , $this->setting_name );		
+			}
+
+		foreach ( $this->setting_field as $field ) {
+				//$fuction = create_function('', "echo '<p>" . $region['description'] . "</p>'; return null;");
+				add_settings_field( $field["slug"], $field["name"] , array( $this , 'display_field' ) , $this->setting_name , $field["region"] , array( $field["slug"] ) );			
+			}
+
+		if ( $this->setting_callback != "" ) {
+			call_user_func( $this->setting_callback );
+			}
+
 	}
 	
 	/*
@@ -139,8 +204,8 @@ class MavidaAdminPage {
 	 */ 
 	function display_field(  $args = array() ) {
 		
-		$options = get_option( $this->settings_fields );
-		echo "<input id='" . $args[0] . "' name='" . $this->settings_fields . "[" . $args[0] . "]' size='40' type='text' value='" . $options[ $args[0] ] . "' />";	
+		$options = get_option( $this->setting_name );
+		echo "<input id='" . $args[0] . "' name='" . $this->setting_name . "[" . $args[0] . "]' size='40' type='text' value='" . $options[ $args[0] ] . "' />";	
 
 	} 
 
@@ -174,7 +239,7 @@ class MavidaAdminPage {
 			
 			echo "<form action='options.php' method='post'>";
 
-			settings_fields( $this->settings_fields ); 
+			settings_fields( $this->setting_name ); 
 
 
 			/*
@@ -183,7 +248,7 @@ class MavidaAdminPage {
 			}
 			*/
 
-			do_settings_sections( $this->settings_fields ); 
+			do_settings_sections( $this->setting_name ); 
 			
 			// qui carico la vista della pagina
 						
@@ -218,12 +283,30 @@ class MavidaAdminPage {
 		}
 
 	/*
-	 * funzione di supporto
+	 * support function
 	 */
-	function lorem_impsum( ) {
-		echo "<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas ut arcu sem, at porta elit. Phasellus molestie facilisis sem, eget interdum justo ultrices ut. Maecenas rhoncus condimentum condimentum. </p>";
+	function lorem_ipsum( ) {
+		return "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas ut arcu sem, at porta elit. Phasellus molestie facilisis sem, eget interdum justo ultrices ut. Maecenas rhoncus condimentum condimentum.";
 		}
 
+	function the_lorem_ipsum( ) {
+		echo $this->lorem_ipsum( );
+		}
+
+	/*
+	 * support function
+	 */
+	function slugerize($phrase) {
+		$result = strtolower($phrase);
+	
+		$result = preg_replace("/[^a-z0-9\s-]/", "", $result);
+		$result = trim(preg_replace("/\s+/", " ", $result));
+		$result = trim(substr($result, 0, 45));
+		$result = preg_replace("/\s/", "-", $result);
+		
+	
+		return $result;
+	}	
 
 }
 
