@@ -11,7 +11,7 @@
  */
 
 
-class MavidaAdminPage {
+class WP_OptionsPage {
 	
 	private	$parent_slug;
 	private	$page_title;
@@ -19,7 +19,6 @@ class MavidaAdminPage {
 	private	$capability;
 	private	$menu_slug;
 	private	$function;
-	
 	
 	private	$viewpath;
 	
@@ -29,34 +28,35 @@ class MavidaAdminPage {
 	
 	private $setting_callback = "";
 
+
+
 	
-	function  __construct() { 
+	function  __construct( $args = array() ) { 
+
+		$defaults = array(
+			'parent_slug' => 'themes.php',
+			'capability' =>	'administrator',
+			'function_name'	=> array( $this , "show_custumm_page"),
+			
+			);
+	
+		$args = wp_parse_args( $args, $defaults );			
+		extract( $args, EXTR_SKIP );
+
+
 		
 		// percorso del file con la vista
 		$this->viewpath = dirname(__FILE__) . "/view.php";
 		
 
-		/*
-		 * esempi per parent_slug
-		 *  For Dashboard: add_submenu_page( 'index.php', ... );
-		 *  For Posts: add_submenu_page( 'edit.php', ... );
-		 *  For Media: add_submenu_page( 'upload.php', ... );
-		 *  For Links: add_submenu_page( 'link-manager.php', ... );
-		 *  For Pages: add_submenu_page( 'edit.php?post_type=page', ... );
-		 *  For Comments: add_submenu_page( 'edit-comments.php', ... );
-		 *  For Appearance: add_submenu_page( 'themes.php', ... );
-		 *  For Plugins: add_submenu_page( 'plugins.php', ... );
-		 *  For Users: add_submenu_page( 'users.php', ... );
-		 *  For Tools: add_submenu_page( 'tools.php', ... );
-		 *  For Settings: add_submenu_page( 'options-general.php', ... ); 		
-		 */ 
+		$this->parent_slug		= $parent_slug;
+		$this->capability		= $capability;
+		$this->function_name	= $function_name;
 
-		$this->parent_slug		= "themes.php";  // apparenza
 		$this->page_title		= "Custom Admin Page";
 		$this->menu_title	    = "Custom Admin Page";
-		$this->capability		= "administrator";
 		$this->menu_slug		= $this->slugerize( $this->page_title );
-		$this->function_name	= array( $this , "show_custumm_page");	
+
 	
 
 		add_action('admin_menu', array( $this , "custom_admin_menu") , 999);
@@ -93,6 +93,22 @@ class MavidaAdminPage {
 	 * setter for menu
 	 */
 	public function setMenu( $menu ){
+		
+		 /*
+		 * esempi per parent_slug
+		 *  For Dashboard: add_submenu_page( 'index.php', ... );
+		 *  For Posts: add_submenu_page( 'edit.php', ... );
+		 *  For Media: add_submenu_page( 'upload.php', ... );
+		 *  For Links: add_submenu_page( 'link-manager.php', ... );
+		 *  For Pages: add_submenu_page( 'edit.php?post_type=page', ... );
+		 *  For Comments: add_submenu_page( 'edit-comments.php', ... );
+		 *  For Appearance: add_submenu_page( 'themes.php', ... );
+		 *  For Plugins: add_submenu_page( 'plugins.php', ... );
+		 *  For Users: add_submenu_page( 'users.php', ... );
+		 *  For Tools: add_submenu_page( 'tools.php', ... );
+		 *  For Settings: add_submenu_page( 'options-general.php', ... ); 		
+		 */ 
+		
 		$this->parent_slug = $menu;
 		}		
 
